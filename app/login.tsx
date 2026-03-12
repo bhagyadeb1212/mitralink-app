@@ -29,7 +29,7 @@ export default function LoginScreen() {
     );
 
     const handleRequestOtp = async () => {
-        if (!phoneNumber || phoneNumber.length < 5) {
+        if (!phoneNumber || phoneNumber.length < 3) {
             Alert.alert('Error', 'Please enter a valid phone number');
             return;
         }
