@@ -251,28 +251,51 @@ const useStore = create<ChatState>((set, get) => ({
 
     requestOtp: async (phone_number) => {
         try {
-            // 🛡️ BYPASS: No Firebase, just call backend
+            // 🛡️ BYPASS: No Firebase, just pretend success
             if (phone_number === '+910000000000') {
                 return { success: true }; 
             }
 
-            // Real MSG91 call via backend
-            const res = await axios.post(`${BASE_URL}/auth/send-otp`, { phone_number });
+            // Real Firebase call
+            const confirmation = await auth().signInWithPhoneNumber(phone_number);
+            get().setConfirmationResult(confirmation);
             return { success: true };
         } catch (err: any) {
             console.error('Request OTP error:', err);
-            return { success: false, error: err.response?.data?.error || 'Failed to send OTP' };
+            return { success: false, error: err.message || 'Failed to send OTP' };
         }
     },
 
     verifyOtp: async (phone_number, otp) => {
         try {
-            const res = await axios.post(`${BASE_URL}/auth/verify-otp`, { phone_number, otp });
+            // 🛡️ BYPASS: Call backend directly
+            if (phone_number === '+910000000000' && otp === '123456') {
+                const res = await axios.post(`${BASE_URL}/auth/verify-otp`, { phone_number, otp });
+                const { token, user, isNewUser } = res.data;
+                return { success: true, token, user, isNewUser };
+            }
+
+            const confirmation = get().confirmationResult;
+            if (!confirmation) {
+                return { success: false, error: 'No OTP request found. Please request OTP again.' };
+            }
+
+            // Verify with Firebase
+            const userCredential = await confirmation.confirm(otp);
+            const uid = userCredential?.user?.uid;
+            
+            if (!uid) {
+                return { success: false, error: 'Failed to retrieve Firebase UID.' };
+            }
+
+            // Authenticate with our backend
+            const res = await axios.post(`${BASE_URL}/auth/verify-otp`, { phone_number, uid });
             const { token, user, isNewUser } = res.data;
+            
             return { success: true, token, user, isNewUser };
         } catch (err: any) {
             console.error('Verify OTP error:', err);
-            return { success: false, error: err.response?.data?.error || 'Invalid OTP' };
+            return { success: false, error: err.response?.data?.error || err.message || 'Invalid OTP' };
         }
     },
 
