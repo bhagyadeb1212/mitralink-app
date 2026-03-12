@@ -251,57 +251,28 @@ const useStore = create<ChatState>((set, get) => ({
 
     requestOtp: async (phone_number) => {
         try {
-            const confirmation = await auth().signInWithPhoneNumber(phone_number);
-            get().setConfirmationResult(confirmation);
+            // 🛡️ BYPASS: No Firebase, just call backend
+            if (phone_number === '+910000000000') {
+                return { success: true }; 
+            }
+
+            // Real MSG91 call via backend
+            const res = await axios.post(`${BASE_URL}/auth/send-otp`, { phone_number });
             return { success: true };
         } catch (err: any) {
-            console.error('Firebase request OTP error:', err);
-            return { success: false, error: err.message || 'Failed to send OTP' };
+            console.error('Request OTP error:', err);
+            return { success: false, error: err.response?.data?.error || 'Failed to send OTP' };
         }
     },
 
     verifyOtp: async (phone_number, otp) => {
         try {
-            // 🛡️ MASTER OTP BYPASS (for testing)
-            if (otp === '123456') {
-                const dummyUid = `bypass_${phone_number}_${Date.now()}`;
-                const res = await axios.post(`${BASE_URL}/auth/verify-firebase`, { phone_number, uid: dummyUid });
-                const { token, user, isNewUser } = res.data;
-                return { success: true, token, user, isNewUser };
-            }
-
-            const confirmation = get().confirmationResult;
-            if (!confirmation) {
-                return { success: false, error: 'No OTP request found. Please request OTP again.' };
-            }
-
-            // Verify with Firebase
-            const userCredential = await confirmation.confirm(otp);
-            const uid = userCredential?.user?.uid;
-            
-            if (!uid) {
-                return { success: false, error: 'Failed to retrieve Firebase UID.' };
-            }
-
-            // Authenticate with our backend
-            const res = await axios.post(`${BASE_URL}/auth/verify-firebase`, { phone_number, uid });
+            const res = await axios.post(`${BASE_URL}/auth/verify-otp`, { phone_number, otp });
             const { token, user, isNewUser } = res.data;
-            
             return { success: true, token, user, isNewUser };
         } catch (err: any) {
-            console.error('Firebase verify OTP error:', err);
-            
-            // Handle different error formats (Firebase vs Axios)
-            let errorMsg = 'Invalid OTP';
-            if (err.response?.data?.error) {
-                errorMsg = err.response.data.error;
-            } else if (err.code === 'auth/invalid-verification-code') {
-                errorMsg = 'Invalid verification code. Please try again.';
-            } else if (err.message) {
-                errorMsg = err.message;
-            }
-
-            return { success: false, error: errorMsg };
+            console.error('Verify OTP error:', err);
+            return { success: false, error: err.response?.data?.error || 'Invalid OTP' };
         }
     },
 
