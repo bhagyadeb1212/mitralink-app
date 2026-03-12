@@ -26,6 +26,25 @@
     },
     {
       "client_info": {
+        "mobilesdk_app_id": "1:851547634664:android:8e8bc95f5474f4fed6825d",
+        "android_client_info": {
+          "package_name": "com.mitralik.admin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAtJWBp6j2qGD-wVDxnQm-4GVdajq-jAR8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:851547634664:android:2475475d7eb4bfbfd6825d",
         "android_client_info": {
           "package_name": "com.rnchatapp"
