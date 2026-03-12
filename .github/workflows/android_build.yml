@@ -47,6 +47,7 @@ jobs:
 
       - name: 🚀 Build APK
         run: |
+          export NODE_BINARY=$(which node)
           cd android
           chmod +x gradlew
           ./gradlew assembleRelease --stacktrace
