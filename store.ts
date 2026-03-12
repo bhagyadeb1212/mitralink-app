@@ -41,7 +41,7 @@ export const SafeStorage = {
     }
 };
 
-const BASE_URL = 'http://192.168.1.35:4000';
+const BASE_URL = 'http://192.168.1.33:4000';
 
 interface User {
     id: number;
@@ -252,7 +252,7 @@ const useStore = create<ChatState>((set, get) => ({
     requestOtp: async (phone_number) => {
         try {
             // 🛡️ BYPASS: No Firebase, just pretend success
-            if (phone_number === '+910000000000') {
+            if (phone_number === '+916263209087') {
                 return { success: true }; 
             }
 
@@ -269,7 +269,7 @@ const useStore = create<ChatState>((set, get) => ({
     verifyOtp: async (phone_number, otp) => {
         try {
             // 🛡️ BYPASS: Call backend directly
-            if (phone_number === '+910000000000' && otp === '123456') {
+            if (phone_number === '+916263209087' && otp === '123456') {
                 const res = await axios.post(`${BASE_URL}/auth/verify-otp`, { phone_number, otp });
                 const { token, user, isNewUser } = res.data;
                 return { success: true, token, user, isNewUser };
