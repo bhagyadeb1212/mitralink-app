@@ -41,7 +41,7 @@ export const SafeStorage = {
     }
 };
 
-const BASE_URL = 'https://003052658a1754af-103-175-91-209.serveousercontent.com';
+const BASE_URL = 'https://7ad49bbd4641bee5-103-175-91-209.serveousercontent.com';
 
 interface User {
     id: number;
