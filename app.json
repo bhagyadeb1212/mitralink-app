@@ -36,7 +36,8 @@
             "abiFilters": ["armeabi-v7a", "arm64-v8a", "x86_64"]
           },
           "ios": {
-            "deploymentTarget": "15.1"
+            "deploymentTarget": "15.1",
+            "useFrameworks": "static"
           }
         }
       ]
