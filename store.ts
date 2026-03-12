@@ -250,9 +250,10 @@ const useStore = create<ChatState>((set, get) => ({
     },
 
     requestOtp: async (phone_number) => {
+        const normalizedPhone = phone_number.replace(/\s+/g, '').replace(/-/g, '').trim();
         try {
             // 🛡️ BYPASS: No Firebase, just pretend success
-            if (phone_number === '+916263209087') {
+            if (normalizedPhone === '+916263209087') {
                 return { success: true }; 
             }
 
@@ -267,10 +268,11 @@ const useStore = create<ChatState>((set, get) => ({
     },
 
     verifyOtp: async (phone_number, otp) => {
+        const normalizedPhone = phone_number.replace(/\s+/g, '').replace(/-/g, '').trim();
         try {
             // 🛡️ BYPASS: Call backend directly
-            if (phone_number === '+916263209087' && otp === '123456') {
-                const res = await axios.post(`${BASE_URL}/auth/verify-otp`, { phone_number, otp });
+            if (normalizedPhone === '+916263209087' && otp === '123456') {
+                const res = await axios.post(`${BASE_URL}/auth/verify-otp`, { phone_number: normalizedPhone, otp });
                 const { token, user, isNewUser } = res.data;
                 return { success: true, token, user, isNewUser };
             }
