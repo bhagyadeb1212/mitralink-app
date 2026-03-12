@@ -41,7 +41,7 @@ export const SafeStorage = {
     }
 };
 
-const BASE_URL = 'http://192.168.1.33:4000';
+const BASE_URL = 'http://192.168.1.35:4000';
 
 interface User {
     id: number;
