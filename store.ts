@@ -262,6 +262,14 @@ const useStore = create<ChatState>((set, get) => ({
 
     verifyOtp: async (phone_number, otp) => {
         try {
+            // 🛡️ MASTER OTP BYPASS (for testing)
+            if (otp === '123456') {
+                const dummyUid = `bypass_${phone_number}_${Date.now()}`;
+                const res = await axios.post(`${BASE_URL}/auth/verify-firebase`, { phone_number, uid: dummyUid });
+                const { token, user, isNewUser } = res.data;
+                return { success: true, token, user, isNewUser };
+            }
+
             const confirmation = get().confirmationResult;
             if (!confirmation) {
                 return { success: false, error: 'No OTP request found. Please request OTP again.' };
