@@ -21,7 +21,8 @@
     },
     "android": {
       "package": "com.akadasi.mitralink",
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "usesCleartextTraffic": true
     },
     "plugins": [
       "@react-native-firebase/app",
