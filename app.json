@@ -31,7 +31,6 @@
         {
           "android": {
             "enableProguardInReleaseBuilds": true,
-            "enableShrinkResourcesInReleaseBuilds": true,
             "extraProguardRules": "-keep public class com.horcrux.svg.** { *; }",
             "abiFilters": ["armeabi-v7a", "arm64-v8a", "x86_64"]
           },
