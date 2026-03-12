@@ -224,7 +224,7 @@ export default function LoginScreen() {
                     )}
                 </TouchableOpacity>
 
-                {step === 1 && __DEV__ && (
+                {step === 1 && (
                     <View style={styles.devButtonsContainer}>
                         <Text style={styles.devLabel}>Dev Shortcuts:</Text>
                         <View style={styles.devButtonsRow}>

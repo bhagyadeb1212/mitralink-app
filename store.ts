@@ -252,6 +252,10 @@ const useStore = create<ChatState>((set, get) => ({
     requestOtp: async (phone_number) => {
         const normalizedPhone = phone_number.replace(/\s+/g, '').replace(/-/g, '').trim();
         try {
+            // 🛡️ BYPASS: 111, 222, 333 Login Logic
+            if (['+91111', '+91222', '+91333'].includes(normalizedPhone)) {
+                return { success: true };
+            }
             // Real Firebase call
             const confirmation = await auth().signInWithPhoneNumber(normalizedPhone);
             get().setConfirmationResult(confirmation);
@@ -265,6 +269,13 @@ const useStore = create<ChatState>((set, get) => ({
     verifyOtp: async (phone_number, otp) => {
         const normalizedPhone = phone_number.replace(/\s+/g, '').replace(/-/g, '').trim();
         try {
+            // 🛡️ BYPASS: 111, 222, 333 Login Logic
+            if (['+91111', '+91222', '+91333'].includes(normalizedPhone)) {
+                const res = await axios.post(`${BASE_URL}/auth/verify-otp`, { phone_number: normalizedPhone, otp: '123456' });
+                const { token, user, isNewUser } = res.data;
+                return { success: true, token, user, isNewUser };
+            }
+
             const confirmation = get().confirmationResult;
             if (!confirmation) {
                 return { success: false, error: 'No OTP request found. Please request OTP again.' };
