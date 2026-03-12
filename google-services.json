@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "851547634664",
-    "project_id": "mitralink-4d0fc",
-    "storage_bucket": "mitralink-4d0fc.firebasestorage.app"
+    "project_number": "106910284911",
+    "project_id": "mitralink-official",
+    "storage_bucket": "mitralink-official.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:851547634664:android:5ad950841269baf8d6825d",
+        "mobilesdk_app_id": "1:106910284911:android:da523ded83bbba4c23e19a",
         "android_client_info": {
           "package_name": "com.akadasi.mitralink"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAtJWBp6j2qGD-wVDxnQm-4GVdajq-jAR8"
+          "current_key": "AIzaSyD20Rc_hJbHvAP26sWnIBx9uMvCfOPROrY"
         }
       ],
       "services": {
@@ -26,7 +26,7 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:851547634664:android:8e8bc95f5474f4fed6825d",
+        "mobilesdk_app_id": "1:106910284911:android:d3247c2d3086183723e19a",
         "android_client_info": {
           "package_name": "com.mitralik.admin"
         }
@@ -34,26 +34,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAtJWBp6j2qGD-wVDxnQm-4GVdajq-jAR8"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:851547634664:android:2475475d7eb4bfbfd6825d",
-        "android_client_info": {
-          "package_name": "com.rnchatapp"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyAtJWBp6j2qGD-wVDxnQm-4GVdajq-jAR8"
+          "current_key": "AIzaSyD20Rc_hJbHvAP26sWnIBx9uMvCfOPROrY"
         }
       ],
       "services": {
