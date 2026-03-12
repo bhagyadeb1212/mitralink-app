@@ -41,7 +41,7 @@ export const SafeStorage = {
     }
 };
 
-const BASE_URL = 'http://192.168.1.33:4000';
+const BASE_URL = 'https://new-words-guess.loca.lt';
 
 interface User {
     id: number;
