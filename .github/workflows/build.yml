@@ -2,52 +2,57 @@ name: Build Wallpaper APK
 
 on:
   push:
-    branches: [main]
-    tags:
-      - 'v*'
+    branches: [ main ]
+  tags: [ 'v*' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+      NODE_BINARY: node
+      NODE_OPTIONS: "--max-old-space-size=4096"
     steps:
-      - name: Checkout code
+      - name: 🏗 Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: ⚙️ Setup Environment
         uses: actions/setup-node@v4
         with:
-          node-version: 20.x
+          node-version: 20
+          cache: 'npm'
 
-      - name: Setup Expo and EAS
-        uses: expo/expo-github-action@v8
+      - name: ☕ Setup Java
+        uses: actions/setup-java@v4
         with:
-          expo-version: latest
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
+          distribution: 'zulu'
+          java-version: '17'
 
-      - name: Install dependencies
-        run: npm install
+      - name: 📦 Install dependencies
+        run: npm install --legacy-peer-deps
 
-      - name: Build Android APK
-        run: eas build --platform android --profile preview --non-interactive
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      - name: 🛠 Configure Expo Prebuild
+        run: npx expo prebuild --platform android
 
-      - name: Get Build URL and Upload
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: 🚀 Build APK
         run: |
-          sleep 10
-          BUILD_URL=$(eas build:list --platform android --status finished --limit 1 --json --non-interactive 2>/dev/null | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const b=JSON.parse(d);console.log(b[0]?.artifacts?.buildUrl||'')}catch(e){}})")
-          if [ -n "$BUILD_URL" ]; then
-            curl -L "$BUILD_URL" -o app-release.apk
-            echo "APK downloaded: $BUILD_URL"
-          fi
+          export NODE_BINARY=$(which node)
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease --stacktrace
+        env:
+          JAVA_OPTS: "-Xmx4g"
 
-      - name: Create GitHub Release with APK
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: 🚀 Release APK (Direct Link)
         uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: app-release.apk
-          generate_release_notes: true
+          files: android/app/build/outputs/apk/release/*.apk
+          name: "Wallpaper App APK Release (${{ github.ref_name }})"
+          body: "Direct APK download for testing. This app has NO login system as requested."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

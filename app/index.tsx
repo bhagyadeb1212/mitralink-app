@@ -20,7 +20,7 @@ const WALLPAPER_CATEGORIES: Record<string, { id: string; title: string; emoji: s
   minimal: { id: 'minimal', title: 'Minimal', emoji: '⬜', query: '3d minimal design' },
 };
 
-const PEXELS_API_KEY = 'MiY4j7h7l8cjbQbWYc5NQTC4AXnP4bT2MBg3xBOVJM00oTCkHLhUhOe2';
+import { Config } from '../constants/Config';
 
 interface WallpaperItem {
   id: string;
@@ -43,7 +43,7 @@ export default function HomeScreen() {
       const query = searchQuery || WALLPAPER_CATEGORIES[category]?.query || '3d wallpaper';
       const res = await fetch(
         `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=20&page=${pageNum}&orientation=portrait`,
-        { headers: { Authorization: PEXELS_API_KEY } }
+        { headers: { Authorization: Config.PEXELS_API_KEY } }
       );
       const data = await res.json();
       if (pageNum === 1) {
