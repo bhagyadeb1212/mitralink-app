@@ -92,7 +92,7 @@ interface ChatState {
     login: (phoneNumber: string) => Promise<{ success: boolean; token?: string; user?: any; isNewUser?: boolean; error?: string }>;
     confirmationResult: any;
     setConfirmationResult: (result: any) => void;
-    updateProfile: (username: string, token?: string) => Promise<boolean>;
+    autoGuestLogin: () => Promise<boolean>;
     setAuth: (token: string, user: any) => Promise<void>;
     login: (phoneNumber: string, username: string) => Promise<boolean>;
     logout: () => void;
@@ -276,11 +276,50 @@ const useStore = create<ChatState>((set, get) => ({
         }
     },
 
+    autoGuestLogin: async () => {
+        try {
+            const savedToken = await SafeStorage.getItem('token');
+            const savedUser = await SafeStorage.getItem('user');
+
+            if (savedToken && savedUser) {
+                const user = JSON.parse(savedUser);
+                set({ token: savedToken, user });
+                get().connectSocket();
+                return true;
+            }
+
+            // Generate a random guest ID
+            const guestPhone = `+91123${Math.floor(1000000 + Math.random() * 9000000)}`;
+            
+            // Try to register with backend
+            try {
+                const res = await axios.post(`${BASE_URL}/auth/login`, { phone_number: guestPhone });
+                const { token, user } = res.data;
+                if (token && user) {
+                    await get().setAuth(token, user);
+                    return true;
+                }
+            } catch (backendErr) {
+                console.warn('Backend reachability failed, using Mock Session');
+            }
+
+            // FALLBACK: Mock Session (Ensure app opens even without internet/backend)
+            const mockToken = `mock_${Date.now()}`;
+            const mockUser = { id: 999, username: 'Guest User', phone_number: guestPhone, is_admin: 0, coin_balance: 100 };
+            await get().setAuth(mockToken, mockUser);
+            return true;
+
+        } catch (err) {
+            console.error('Auto login fatal error:', err);
+            return false;
+        }
+    },
+
     setAuth: async (token, user) => {
         await SafeStorage.setItem('token', token);
+        await SafeStorage.setItem('user', JSON.stringify(user));
         set({ token, user });
         get().connectSocket();
-        get().fetchContacts();
     },
 
     setIsCallActive: (active) => set({ isCallActive: active }),

@@ -22,13 +22,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     const initialize = async () => {
-      const savedToken = await SafeStorage.getItem('token');
-
-      if (savedToken) {
-        useStore.setState({ token: savedToken });
-        await fetchUserProfile();
-        connectSocket();
-      }
+      await autoGuestLogin();
       setIsReady(true);
     };
     initialize();
@@ -36,14 +30,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (!isReady) return;
-
-    const inAuthGroup = segments[0] === 'login';
-
-    if (!token && !inAuthGroup) {
-      router.replace('/login');
-    } else if (token && inAuthGroup) {
-      router.replace('/(tabs)');
-    }
+    // No more redirects to login
   }, [token, segments, isReady]);
 
   if (!isReady) return null;
@@ -53,7 +40,6 @@ export default function RootLayout() {
       <ActionSheetProvider>
         <>
           <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="login" />
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="chat/[id]" options={{ headerShown: false }} />
           </Stack>
