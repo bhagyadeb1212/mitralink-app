@@ -91,6 +91,7 @@ interface ChatState {
 
     requestOtp: (phoneNumber: string) => Promise<{ success: boolean; otp?: string; error?: string }>;
     verifyOtp: (phoneNumber: string, otp: string) => Promise<{ success: boolean; token?: string; user?: any; isNewUser?: boolean; error?: string }>;
+    testLogin: (phoneNumber: string) => Promise<{ success: boolean; token?: string; user?: any; error?: string }>;
     confirmationResult: any;
     setConfirmationResult: (result: any) => void;
     updateProfile: (username: string, token?: string) => Promise<boolean>;
@@ -271,6 +272,21 @@ const useStore = create<ChatState>((set, get) => ({
         } catch (err: any) {
             console.error('Verify OTP error:', err);
             return { success: false, error: err.response?.data?.error || err.message || 'Invalid OTP' };
+        }
+    },
+
+    testLogin: async (phone_number) => {
+        const normalizedPhone = phone_number.replace(/\s+/g, '').replace(/-/g, '').trim();
+        try {
+            const res = await axios.post(`${BASE_URL}/auth/test-login`, { phone_number: normalizedPhone });
+            const { token, user } = res.data;
+            if (token && user) {
+                await get().setAuth(token, user);
+            }
+            return { success: true, token, user };
+        } catch (err: any) {
+            console.error('Test login failed:', err);
+            return { success: false, error: err.response?.data?.error || 'Failed to bypass OTP' };
         }
     },
 

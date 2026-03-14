@@ -20,8 +20,11 @@ export default function LoginScreen() {
     const [receivedOtp, setReceivedOtp] = useState('');
     const [tempAuth, setTempAuth] = useState<{ token: string, user: any } | null>(null);
 
-    const { requestOtp, verifyOtp, updateProfile, setAuth } = useStore();
+    const { requestOtp, verifyOtp, updateProfile, setAuth, testLogin } = useStore();
     const router = useRouter();
+
+    const bypassNumbers = ['111', '222', '333', '444', '555', '000000'];
+    const bypassOtp = '123456';
 
     const filteredCountries = countries.filter(c =>
         c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -36,16 +39,16 @@ export default function LoginScreen() {
 
         const fullPhone = `${selectedCountry.code}${phoneNumber}`;
         setIsLoading(true);
-        const result = await requestOtp(fullPhone);
+        // 🧪 TEST MODE: Directly bypass OTP
+        const result = await testLogin(fullPhone);
         setIsLoading(false);
 
-        if (result.success) {
-            if (result.otp) {
-                setReceivedOtp(result.otp);
-            }
-            setStep(2);
+        if (result.success && result.token && result.user) {
+            setTempAuth({ token: result.token, user: result.user });
+            if (result.user.username) setUsername(result.user.username);
+            setStep(3);
         } else {
-            Alert.alert('Error', result.error || 'Failed to send OTP');
+            Alert.alert('Error', result.error || 'Failed to bypass OTP');
         }
     };
 
@@ -56,13 +59,28 @@ export default function LoginScreen() {
         }
 
         const fullPhone = `${selectedCountry.code}${phoneNumber}`;
+
+        // Bypass Logic for Verification
+        if (bypassNumbers.includes(phoneNumber) && otp === bypassOtp) {
+             setIsLoading(true);
+             // We still call verifyOtp because the backend needs to create/return a session for these numbers
+             const result = await verifyOtp(fullPhone, otp);
+             setIsLoading(false);
+
+             if (result.success && result.token && result.user) {
+                setTempAuth({ token: result.token, user: result.user });
+                if (result.user.username) setUsername(result.user.username);
+                setStep(3);
+                return;
+             }
+        }
+
         setIsLoading(true);
         const result = await verifyOtp(fullPhone, otp);
         setIsLoading(false);
 
         if (result.success && result.token && result.user) {
             setTempAuth({ token: result.token, user: result.user });
-            // Pre-fill username if exists
             if (result.user.username) {
                 setUsername(result.user.username);
             }
@@ -215,7 +233,7 @@ export default function LoginScreen() {
                     ) : (
                         <>
                             <Text style={styles.buttonText}>
-                                {step === 1 && "Send OTP"}
+                                {step === 1 && "Login"}
                                 {step === 2 && "Verify Code"}
                                 {step === 3 && "Finish Setup"}
                             </Text>
@@ -226,16 +244,22 @@ export default function LoginScreen() {
 
                 {step === 1 && (
                     <View style={styles.devButtonsContainer}>
-                        <Text style={styles.devLabel}>Dev Shortcuts:</Text>
+                        <Text style={styles.devLabel}>Dev Shortcuts (Bypass):</Text>
                         <View style={styles.devButtonsRow}>
                             <TouchableOpacity style={styles.devButton} onPress={() => { setPhoneNumber('111'); setSelectedCountry(countries.find(c => c.code === '+91')!); }}>
-                                <Text style={styles.devButtonText}>Kanika</Text>
+                                <Text style={styles.devButtonText}>User 1</Text>
                             </TouchableOpacity>
                             <TouchableOpacity style={styles.devButton} onPress={() => { setPhoneNumber('222'); setSelectedCountry(countries.find(c => c.code === '+91')!); }}>
-                                <Text style={styles.devButtonText}>Bhagya</Text>
+                                <Text style={styles.devButtonText}>User 2</Text>
                             </TouchableOpacity>
                             <TouchableOpacity style={styles.devButton} onPress={() => { setPhoneNumber('333'); setSelectedCountry(countries.find(c => c.code === '+91')!); }}>
-                                <Text style={styles.devButtonText}>Ppp</Text>
+                                <Text style={styles.devButtonText}>User 3</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.devButton} onPress={() => { setPhoneNumber('444'); setSelectedCountry(countries.find(c => c.code === '+91')!); }}>
+                                <Text style={styles.devButtonText}>User 4</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.devButton} onPress={() => { setPhoneNumber('555'); setSelectedCountry(countries.find(c => c.code === '+91')!); }}>
+                                <Text style={styles.devButtonText}>User 5</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -406,10 +430,11 @@ const styles = StyleSheet.create({
     devButtonsRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        gap: 10,
+        flexWrap: 'wrap',
+        gap: 8,
     },
     devButton: {
-        flex: 1,
+        width: '18%',
         backgroundColor: 'rgba(0, 98, 227, 0.2)',
         paddingVertical: 10,
         borderRadius: 8,
@@ -419,7 +444,7 @@ const styles = StyleSheet.create({
     },
     devButtonText: {
         color: '#cbd5e1',
-        fontSize: 14,
+        fontSize: 12,
         fontWeight: '500',
     },
     modalBackground: {
