@@ -6,32 +6,27 @@ import { Smartphone, ShieldCheck, User, ArrowRight, ChevronLeft, Search } from '
 import { countries, Country } from '../constants/countries';
 
 export default function LoginScreen() {
-    const [step, setStep] = useState(1); // 1: Phone, 2: OTP, 3: Name
+    const [step, setStep] = useState(1); // 1: Phone, 3: Name
     const [phoneNumber, setPhoneNumber] = useState('');
     const [selectedCountry, setSelectedCountry] = useState<Country>(
-        countries.find(c => c.code === '+91') || countries[0] // Default to India or first in list
+        countries.find(c => c.code === '+91') || countries[0]
     );
     const [isCountryModalVisible, setIsCountryModalVisible] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
-    const [otp, setOtp] = useState('');
     const [username, setUsername] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [receivedOtp, setReceivedOtp] = useState('');
     const [tempAuth, setTempAuth] = useState<{ token: string, user: any } | null>(null);
 
-    const { requestOtp, verifyOtp, updateProfile, setAuth, testLogin } = useStore();
+    const { login, updateProfile, setAuth } = useStore();
     const router = useRouter();
-
-    const bypassNumbers = ['111', '222', '333', '444', '555', '000000'];
-    const bypassOtp = '123456';
 
     const filteredCountries = countries.filter(c =>
         c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.code.includes(searchQuery)
     );
 
-    const handleRequestOtp = async () => {
+    const handleLogin = async () => {
         if (!phoneNumber || phoneNumber.length < 3) {
             Alert.alert('Error', 'Please enter a valid phone number');
             return;
@@ -39,60 +34,25 @@ export default function LoginScreen() {
 
         const fullPhone = `${selectedCountry.code}${phoneNumber}`;
         setIsLoading(true);
-        // 🧪 TEST MODE: Directly bypass OTP
-        const result = await testLogin(fullPhone);
+        const result = await login(fullPhone);
         setIsLoading(false);
 
         if (result.success && result.token && result.user) {
-            setTempAuth({ token: result.token, user: result.user });
-            if (result.user.username) setUsername(result.user.username);
-            setStep(3);
-        } else {
-            Alert.alert('Error', result.error || 'Failed to bypass OTP');
-        }
-    };
-
-    const handleVerifyOtp = async () => {
-        if (otp.length < 6) {
-            Alert.alert('Error', 'Please enter a 6-digit OTP');
-            return;
-        }
-
-        const fullPhone = `${selectedCountry.code}${phoneNumber}`;
-
-        // Bypass Logic for Verification
-        if (bypassNumbers.includes(phoneNumber) && otp === bypassOtp) {
-             setIsLoading(true);
-             // We still call verifyOtp because the backend needs to create/return a session for these numbers
-             const result = await verifyOtp(fullPhone, otp);
-             setIsLoading(false);
-
-             if (result.success && result.token && result.user) {
+            if (result.isNewUser || !result.user.username) {
                 setTempAuth({ token: result.token, user: result.user });
-                if (result.user.username) setUsername(result.user.username);
                 setStep(3);
-                return;
-             }
-        }
-
-        setIsLoading(true);
-        const result = await verifyOtp(fullPhone, otp);
-        setIsLoading(false);
-
-        if (result.success && result.token && result.user) {
-            setTempAuth({ token: result.token, user: result.user });
-            if (result.user.username) {
-                setUsername(result.user.username);
+            } else {
+                await setAuth(result.token, result.user);
+                router.replace('/(tabs)');
             }
-            setStep(3);
         } else {
-            Alert.alert('Error', result.error || 'Invalid OTP');
+            Alert.alert('Error', result.error || 'Failed to login');
         }
     };
 
     const handleSetProfile = async () => {
         if (!username.trim()) {
-            Alert.alert('Error', 'Please enter something for your profile name');
+            Alert.alert('Error', 'Please enter your profile name');
             return;
         }
 
@@ -114,14 +74,8 @@ export default function LoginScreen() {
     };
 
     const reset = () => {
-        if (step === 3) {
-            setStep(2);
-        } else {
-            setStep(1);
-            setOtp('');
-            setReceivedOtp('');
-            setTempAuth(null);
-        }
+        setStep(1);
+        setTempAuth(null);
     };
 
     const renderCountryItem = ({ item }: { item: Country }) => (
@@ -145,21 +99,17 @@ export default function LoginScreen() {
             style={styles.container}
         >
             <View style={styles.glass}>
-                {step > 1 && (
+                {step === 3 && (
                     <TouchableOpacity onPress={reset} style={styles.backButton}>
                         <ChevronLeft size={24} color="#94a3b8" />
                     </TouchableOpacity>
                 )}
 
                 <Text style={styles.title}>
-                    {step === 1 && "MitraLink"}
-                    {step === 2 && "Verification"}
-                    {step === 3 && "Profile Name"}
+                    MitraLink
                 </Text>
                 <Text style={styles.subtitle}>
-                    {step === 1 && "Enter your phone number to continue"}
-                    {step === 2 && `Enter the 6-digit code sent to ${selectedCountry.code}${phoneNumber}`}
-                    {step === 3 && "Type anything for your profile name"}
+                    {step === 1 ? "Enter your phone number to continue" : "Setup your profile name"}
                 </Text>
 
                 {step === 1 && (
@@ -185,32 +135,12 @@ export default function LoginScreen() {
                     </View>
                 )}
 
-                {step === 2 && (
-                    <View>
-                        <View style={styles.inputContainer}>
-                            <ShieldCheck size={20} color="#94a3b8" style={styles.icon} />
-                            <TextInput
-                                style={styles.input}
-                                placeholder="6-digit OTP"
-                                placeholderTextColor="#64748b"
-                                value={otp}
-                                onChangeText={setOtp}
-                                keyboardType="number-pad"
-                                maxLength={6}
-                            />
-                        </View>
-                        {receivedOtp !== '' && (
-                            <Text style={styles.devOtp}>Dev Note: OTP is {receivedOtp}</Text>
-                        )}
-                    </View>
-                )}
-
                 {step === 3 && (
                     <View style={styles.inputContainer}>
                         <User size={20} color="#94a3b8" style={styles.icon} />
                         <TextInput
                             style={styles.input}
-                            placeholder="Type anything..."
+                            placeholder="Your Name"
                             placeholderTextColor="#64748b"
                             value={username}
                             onChangeText={setUsername}
@@ -221,11 +151,7 @@ export default function LoginScreen() {
 
                 <TouchableOpacity
                     style={[styles.button, isLoading && styles.buttonDisabled]}
-                    onPress={
-                        step === 1 ? handleRequestOtp :
-                            step === 2 ? handleVerifyOtp :
-                                handleSetProfile
-                    }
+                    onPress={step === 1 ? handleLogin : handleSetProfile}
                     disabled={isLoading}
                 >
                     {isLoading ? (
@@ -233,37 +159,12 @@ export default function LoginScreen() {
                     ) : (
                         <>
                             <Text style={styles.buttonText}>
-                                {step === 1 && "Login"}
-                                {step === 2 && "Verify Code"}
-                                {step === 3 && "Finish Setup"}
+                                {step === 1 ? "Continue" : "Finish Setup"}
                             </Text>
                             <ArrowRight size={20} color="#fff" style={{ marginLeft: 8 }} />
                         </>
                     )}
                 </TouchableOpacity>
-
-                {step === 1 && (
-                    <View style={styles.devButtonsContainer}>
-                        <Text style={styles.devLabel}>Dev Shortcuts (Bypass):</Text>
-                        <View style={styles.devButtonsRow}>
-                            <TouchableOpacity style={styles.devButton} onPress={() => { setPhoneNumber('111'); setSelectedCountry(countries.find(c => c.code === '+91')!); }}>
-                                <Text style={styles.devButtonText}>User 1</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.devButton} onPress={() => { setPhoneNumber('222'); setSelectedCountry(countries.find(c => c.code === '+91')!); }}>
-                                <Text style={styles.devButtonText}>User 2</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.devButton} onPress={() => { setPhoneNumber('333'); setSelectedCountry(countries.find(c => c.code === '+91')!); }}>
-                                <Text style={styles.devButtonText}>User 3</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.devButton} onPress={() => { setPhoneNumber('444'); setSelectedCountry(countries.find(c => c.code === '+91')!); }}>
-                                <Text style={styles.devButtonText}>User 4</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.devButton} onPress={() => { setPhoneNumber('555'); setSelectedCountry(countries.find(c => c.code === '+91')!); }}>
-                                <Text style={styles.devButtonText}>User 5</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                )}
             </View>
 
             <Modal
@@ -285,7 +186,7 @@ export default function LoginScreen() {
                             <Search size={18} color="#94a3b8" style={styles.searchIcon} />
                             <TextInput
                                 style={styles.searchInput}
-                                placeholder="Search country or code"
+                                placeholder="Search country..."
                                 placeholderTextColor="#64748b"
                                 value={searchQuery}
                                 onChangeText={setSearchQuery}

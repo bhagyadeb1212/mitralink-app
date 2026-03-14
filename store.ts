@@ -89,9 +89,7 @@ interface ChatState {
     messages: { [key: string]: Message[] };
     isPremium: boolean;
 
-    requestOtp: (phoneNumber: string) => Promise<{ success: boolean; otp?: string; error?: string }>;
-    verifyOtp: (phoneNumber: string, otp: string) => Promise<{ success: boolean; token?: string; user?: any; isNewUser?: boolean; error?: string }>;
-    testLogin: (phoneNumber: string) => Promise<{ success: boolean; token?: string; user?: any; error?: string }>;
+    login: (phoneNumber: string) => Promise<{ success: boolean; token?: string; user?: any; isNewUser?: boolean; error?: string }>;
     confirmationResult: any;
     setConfirmationResult: (result: any) => void;
     updateProfile: (username: string, token?: string) => Promise<boolean>;
@@ -250,43 +248,18 @@ const useStore = create<ChatState>((set, get) => ({
         }
     },
 
-    requestOtp: async (phone_number) => {
+    login: async (phone_number: string) => {
         const normalizedPhone = phone_number.replace(/\s+/g, '').replace(/-/g, '').trim();
         try {
-            // 🛡️ ALL NUMBERS: Skip Firebase entirely, use backend directly
-            // This avoids BILLING_NOT_ENABLED error for all real numbers
-            return { success: true };
-        } catch (err: any) {
-            console.error('Request OTP error:', err);
-            return { success: false, error: err.message || 'Failed to send OTP' };
-        }
-    },
-
-    verifyOtp: async (phone_number, otp) => {
-        const normalizedPhone = phone_number.replace(/\s+/g, '').replace(/-/g, '').trim();
-        try {
-            // 🛡️ ALL NUMBERS: Skip Firebase, verify through backend directly
-            const res = await axios.post(`${BASE_URL}/auth/verify-otp`, { phone_number: normalizedPhone, otp });
+            const res = await axios.post(`${BASE_URL}/auth/login`, { phone_number: normalizedPhone });
             const { token, user, isNewUser } = res.data;
-            return { success: true, token, user, isNewUser };
-        } catch (err: any) {
-            console.error('Verify OTP error:', err);
-            return { success: false, error: err.response?.data?.error || err.message || 'Invalid OTP' };
-        }
-    },
-
-    testLogin: async (phone_number) => {
-        const normalizedPhone = phone_number.replace(/\s+/g, '').replace(/-/g, '').trim();
-        try {
-            const res = await axios.post(`${BASE_URL}/auth/test-login`, { phone_number: normalizedPhone });
-            const { token, user } = res.data;
             if (token && user) {
                 await get().setAuth(token, user);
             }
-            return { success: true, token, user };
+            return { success: true, token, user, isNewUser };
         } catch (err: any) {
-            console.error('Test login failed:', err);
-            return { success: false, error: err.response?.data?.error || 'Failed to bypass OTP' };
+            console.error('Login error:', err);
+            return { success: false, error: err.response?.data?.error || err.message || 'Login failed' };
         }
     },
 
